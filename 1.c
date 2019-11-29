@@ -2,6 +2,7 @@
 #include<stdlib.h>
 #include<string.h>
 #include<unistd.h>
+#include<math.h>
 struct Block{
 
     int board[3][3];
@@ -20,7 +21,7 @@ void copy_boards(int dest[3][3], int src[3][3]);
 block* hscores(int perm, block *top_node, block *head, int goal[3][3]);
 int final_state(int b[3][3], int goal[3][3]);
 block* new_node();
-int get_hscore(int board[3][3],int goal[3][3]);
+double get_hscore(int board[3][3],int goal[3][3]);
 
 int main(){
 
@@ -46,8 +47,8 @@ int main(){
     int goal_state[3][3] = {1,2,3,4,5,6,7,8,-1};
     //print_board(goal_state);
 
-    top_node->cost = get_hscore(top_node->board,goal_state);
-    top_node->level = 0;
+    //top_node->cost = get_hscore(top_node->board,goal_state);
+    //top_node->level = 0;
 	block *head = top_node;
 	block *b = top_node;
 	
@@ -58,7 +59,7 @@ int main(){
         //pick the least f score grid and again go to 1st comment
         //done
         int perms = generate_permutations(head);
-        block* least_board=hscores(perms, top_node, head, goal_state);
+        block* least_board=hscores(perms, top_node, head->next, goal_state);
         //b=least_cost(head);
         head = least_board;
         print_board(least_board->board);
@@ -69,19 +70,37 @@ int main(){
     print_board(head->board);
 }
 
-int get_hscore(int board[3][3],int goal[3][3]){
+int abs(a)
+{
+	return a<0?-a:a;
+}
+double get_hscore(int board[3][3],int goal[3][3]){
 
     //returns the h-score : Here the hueristic taken is number of misplaced tiles
 
-    int misplaced_tiles = 0;
+    double cost = 0;
 
-    for(int i=0;i<3;i++){
-        for(int j=0;j<3;j++){
+    for(int i=0;i<3;i++)
+    {
+    	for(int j=0;j<3;j++)
+    	{
             if(board[i][j] != goal[i][j])
-                misplaced_tiles++;    
+            {
+            	for(int i2=0; i2<3; i2++)
+            	{
+            		for(int j2=0; j2<3; j2++)
+            		{
+            			if(board[i][j] == goal[i2][j2])
+            			{
+            				cost+=sqrt((i-i2)*(i-i2)+(j-j2)*(j-j2));
+            			}
+            		}
+            	}
+                    
+        	}
         }
     }
-    return misplaced_tiles;
+    return cost;
 }
 int final_state(int b[3][3], int goal[3][3])
 {
@@ -99,11 +118,13 @@ block* hscores(int perm, block *top_node, block *head, int goal[3][3])
 {
 	block *temp = head;
 	block *least_cost = NULL;
-	int min = 1000000000;
-	int t=0;
+	double min = 1000000000.0;
+	double t=0.0;
 	while(temp!=NULL)
 	{
 		t=get_hscore(temp->board, goal) + get_hscore(temp->board, top_node->board);
+		print_board(temp->board);
+		printf("Cost=%lf\n",t);
 		if(t<min)
 		{
 			min=t;
@@ -230,6 +251,8 @@ int generate_permutations(block *head)
 		int gen = 0;
 		temp = new_node();
 		copy_boards(temp->board, head->board);
+		t_head->next=temp;
+		t_head = temp;
 		if(space_i==0)
 		{
 			//down
